@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TrackDetailView: View {
+    
     let track: Track
     @StateObject private var player = PlayerEngine()
     
@@ -31,7 +32,7 @@ struct TrackDetailView: View {
             }
             
             VStack(spacing: 4) {
-                ProgressView(value: player.currentTime, total: max(player.duration, 0.1))
+                ProgressView(value: progress)
                 HStack {
                     Text(timeString(player.currentTime))
                     Spacer()
@@ -57,6 +58,12 @@ struct TrackDetailView: View {
             }
         }
         .onDisappear { player.teardown() }
+    }
+    
+    private var progress: Double {
+        guard player.duration > 0 else { return 0 }
+        let fraction = player.currentTime / player.duration
+        return min(max(fraction, 0), 1)
     }
     
     private var highResArtworkURL: URL? {

@@ -90,7 +90,8 @@ final class PlayerEngine: ObservableObject {
         let interval = CMTime(seconds: 0.2, preferredTimescale: 600)
         timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             MainActor.assumeIsolated {
-                self?.currentTime = time.seconds
+                let seconds = time.seconds
+                self?.currentTime = seconds.isFinite ? seconds : 0
             }
         }
     }
