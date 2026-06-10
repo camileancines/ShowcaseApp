@@ -1,0 +1,17 @@
+{
+  "resultCount": 2,
+  "results": [
+    {
+      "wrapperType": "track",
+      "kind": "song",
+      "trackId": 1023678453,
+      "trackName": "The Journey",
+      "artistName": "Tom Misch",
+      "collectionName": "Beat Tape 2",
+      "artworkUrl100": "https://.../100x100bb.jpg",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/.../preview.m4a",
+      "trackTimeMillis": 218000,
+      "primaryGenreName": "Hip-Hop/Rap"
+    }
+  ]
+}
