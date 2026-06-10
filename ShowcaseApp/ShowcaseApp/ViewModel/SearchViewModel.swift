@@ -19,6 +19,7 @@ final class SearchViewModel: ObservableObject {
     private let service: NetworkService
     private var cancellables = Set<AnyCancellable>()
     private var searchTask: Task<Void, Never>?
+    private let location = LocationManager()
     
     init(service: NetworkService = NetworkService()) {
         self.service = service
@@ -49,7 +50,7 @@ final class SearchViewModel: ObservableObject {
         searchTask = Task {
             isLoading = true
             do {
-                let results = try await service.searchTracks(term: trimmed, country: "br")
+                let results = try await service.searchTracks(term: trimmed, country: location.countryCode)
                 guard !Task.isCancelled else { return } // Busca substituída
                 tracks = results.filter { $0.previewUrl != nil }
                 isLoading = false
@@ -59,5 +60,9 @@ final class SearchViewModel: ObservableObject {
                 isLoading = false
             }
         }
+    }
+    
+    func refreshRegion() async {
+        await location.refreshRegion()
     }
 }

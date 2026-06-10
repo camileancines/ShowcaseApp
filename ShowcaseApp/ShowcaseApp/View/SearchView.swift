@@ -19,6 +19,7 @@ struct SearchView: View {
                     TrackDetailView(track: track)
                 }
         }
+        .task { await viewModel.refreshRegion() }
     }
     
     @ViewBuilder
