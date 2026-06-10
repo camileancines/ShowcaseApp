@@ -12,6 +12,9 @@ struct TrackDetailView: View {
     let track: Track
     @StateObject private var player = PlayerEngine()
     
+    @Environment(\.managedObjectContext) private var context
+    @State private var isFavorite = false
+    
     var body: some View {
         VStack(spacing: 24) {
             AsyncImage(url: highResArtworkURL) { image in
@@ -52,10 +55,23 @@ struct TrackDetailView: View {
         .padding()
         .navigationTitle(track.trackName)
         .navigationBarTitleDisplayMode(.inline)
+        
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    FavoritesService(context: context).toggle(track: track)
+                    isFavorite.toggle()
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                }
+            }
+        }
+        
         .onAppear {
             if let s = track.previewUrl, let url = URL(string: s) {
                 player.start(url: url)
             }
+            isFavorite = FavoritesService(context: context).isFavorite(trackId: track.trackId)
         }
         .onDisappear { player.teardown() }
     }

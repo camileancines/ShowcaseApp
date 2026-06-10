@@ -12,7 +12,8 @@ import CoreData
 struct ShowcaseAppApp: App {
     var body: some Scene {
         WindowGroup {
-            SearchView()
+            RootView()
+                .environment(\.managedObjectContext, PersistenceController().container.viewContext)
         }
     }
 }
