@@ -5,34 +5,66 @@
 //  Created by Camile Alves Ancines on 09/06/26.
 //
 
-import XCTest
+import Testing
 @testable import ShowcaseApp
 
-final class ShowcaseAppTests: XCTestCase {
+struct MockTrackSearcher: TrackSearching {
+    let result: Result<[Track], Error>
+    func searchTracks(term: String, country: String) async throws -> [Track] {
+        try result.get()
+    }
+}
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+// Fábrica de Track para os testes
+extension Track {
+    static func stub(id: Int, preview: String? = "https://x/p.m4a") -> Track {
+        Track(trackId: id, trackName: "Song \(id)", artistName: "Artist",
+              collectionName: nil, artworkUrl100: nil, previewUrl: preview,
+              trackTimeMillis: nil, primaryGenreName: nil)
+    }
+}
+
+@MainActor
+struct SearchViewModelTests {
+
+    @Test func retornaFaixasNoSucesso() async {
+        let faixas = [Track.stub(id: 1), Track.stub(id: 2)]
+        let vm = SearchViewModel(service: MockTrackSearcher(result: .success(faixas)))
+
+        await vm.search(term: "daft punk")
+
+        #expect(vm.tracks.count == 2)
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoading == false)
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    @Test func filtraFaixasSemPreview() async {
+        let faixas = [Track.stub(id: 1, preview: "https://x/p.m4a"),
+                      Track.stub(id: 2, preview: nil)]
+        let vm = SearchViewModel(service: MockTrackSearcher(result: .success(faixas)))
+
+        await vm.search(term: "x")
+
+        #expect(vm.tracks.count == 1)
+        #expect(vm.tracks.first?.trackId == 1)
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-        // XCTest Documentation
-        // https://developer.apple.com/documentation/xctest
+    @Test func defineErroNaFalha() async {
+        let vm = SearchViewModel(service: MockTrackSearcher(
+            result: .failure(NetworkError.badResponse(statusCode: 500))))
+
+        await vm.search(term: "x")
+
+        #expect(vm.errorMessage != nil)
+        #expect(vm.tracks.isEmpty)
+        #expect(vm.isLoading == false)
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
-    }
+    @Test func termoVazioLimpaResultados() async {
+        let vm = SearchViewModel(service: MockTrackSearcher(result: .success([Track.stub(id: 1)])))
 
+        await vm.search(term: "   ")
+
+        #expect(vm.tracks.isEmpty)
+    }
 }
