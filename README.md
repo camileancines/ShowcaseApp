@@ -80,4 +80,4 @@ To verify the audio session, run on a physical device with the silent switch on,
 
 ## Author
 
-**Camile Ancines** — iOS developer.
+**Camile Ancines** - iOS developer.
