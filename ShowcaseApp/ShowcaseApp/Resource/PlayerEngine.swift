@@ -10,24 +10,33 @@ import Combine
 
 @MainActor
 final class PlayerEngine: ObservableObject {
-    
+
     @Published private(set) var isPlaying = false
     @Published private(set) var currentTime: Double = 0
     @Published private(set) var duration: Double = 0
-    
+
     private let player = AVPlayer()
     private var timeObserverToken: Any?
     private var cancellables = Set<AnyCancellable>()
-    
-    init() {
-        configureAudioSession()
-        observePlaybackStatus()
-        addPeriodicTimeObserver()
-    }
-    
+    private var currentURL: URL?
+
     func start(url: URL) {
+        // Monta os observers do player apenas na primeira vez
+        if timeObserverToken == nil {
+            configureAudioSession()
+            observePlaybackStatus()
+            addPeriodicTimeObserver()
+        }
+
+        // Mesmo item já carregado, apenas retoma de onde parou
+        if currentURL == url {
+            player.play()
+            return
+        }
+
+        currentURL = url
         let item = AVPlayerItem(url: url)
-        
+
         item.publisher(for: \.status)
             .filter { $0 == .readyToPlay }
             .receive(on: DispatchQueue.main)
@@ -36,7 +45,7 @@ final class PlayerEngine: ObservableObject {
                 if seconds.isFinite { self?.duration = seconds }
             }
             .store(in: &cancellables)
-        
+
         NotificationCenter.default
             .publisher(for: AVPlayerItem.didPlayToEndTimeNotification, object: item)
             .receive(on: DispatchQueue.main)
@@ -45,29 +54,23 @@ final class PlayerEngine: ObservableObject {
                 self?.player.pause()
             }
             .store(in: &cancellables)
-        
+
         player.replaceCurrentItem(with: item)
         player.play()
     }
-    
-    func teardown() {
+
+    func pause() {
         player.pause()
-        if let token = timeObserverToken {
-            player.removeTimeObserver(token)
-            timeObserverToken = nil
-        }
-        cancellables.removeAll()
-        try? AVAudioSession.sharedInstance().setActive(false)
     }
-    
+
     func togglePlayPause() {
         player.timeControlStatus == .playing ? player.pause() : player.play()
     }
-    
+
     func seek(to seconds: Double) {
         player.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
     }
-    
+
     private func configureAudioSession() {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback)
@@ -76,7 +79,7 @@ final class PlayerEngine: ObservableObject {
             print("AVAudioSession error: \(error)")
         }
     }
-    
+
     private func observePlaybackStatus() {
         player.publisher(for: \.timeControlStatus)
             .receive(on: DispatchQueue.main)
@@ -85,7 +88,7 @@ final class PlayerEngine: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
     private func addPeriodicTimeObserver() {
         let interval = CMTime(seconds: 0.2, preferredTimescale: 600)
         timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in

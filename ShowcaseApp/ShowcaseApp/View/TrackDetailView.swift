@@ -73,7 +73,7 @@ struct TrackDetailView: View {
             }
             isFavorite = FavoritesService(context: context).isFavorite(trackId: track.trackId)
         }
-        .onDisappear { player.teardown() }
+        .onDisappear { player.pause() }
     }
     
     private var progress: Double {

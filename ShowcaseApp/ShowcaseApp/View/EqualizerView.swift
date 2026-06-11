@@ -27,12 +27,12 @@ final class EqualizerView: UIView {
     private func setupLayers() {
         bar.backgroundColor = UIColor.systemBlue.cgColor
         bar.cornerRadius = barWidth / 2
-        bar.anchorPoint = CGPoint(x: 0.5, y: 1.0)   // âncora na base: cresce pra cima
+        bar.anchorPoint = CGPoint(x: 0.5, y: 1.0)
         
         replicator.addSublayer(bar)
         replicator.instanceCount = barCount
         replicator.instanceTransform = CATransform3DMakeTranslation(barWidth + barSpacing, 0, 0)
-        replicator.instanceDelay = 0.15            // defasagem entre clones -> onda
+        replicator.instanceDelay = 0.15
         layer.addSublayer(replicator)
     }
     

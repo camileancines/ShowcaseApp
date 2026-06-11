@@ -24,16 +24,16 @@ final class LocationManager: NSObject, ObservableObject {
     override init() {
         super.init()
         manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyReduced // país basta
+        manager.desiredAccuracy = kCLLocationAccuracyReduced
     }
 
     func refreshRegion() async {
         switch manager.authorizationStatus {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
-            return // o callback de mudança de status reinicia o fluxo
+            return
         case .restricted, .denied:
-            countryCode = Self.localeFallback // degradação graciosa
+            countryCode = Self.localeFallback
             return
         case .authorizedWhenInUse, .authorizedAlways:
             break
