@@ -16,12 +16,12 @@ final class SearchViewModel: ObservableObject {
     @Published private(set) var isLoading: Bool = false
     @Published private(set) var errorMessage: String?
     
-    private let service: NetworkService
+    private let service: any TrackSearching
     private var cancellables = Set<AnyCancellable>()
     private var searchTask: Task<Void, Never>?
     private let location = LocationManager()
     
-    init(service: NetworkService = NetworkService()) {
+    init(service: any TrackSearching = NetworkService()) {
         self.service = service
         bindSearch()
     }
@@ -38,27 +38,29 @@ final class SearchViewModel: ObservableObject {
     }
     
     private func performSearch(term: String) {
-        // Cancela uma busca anterior ainda sendo executada
         searchTask?.cancel()
-        
+        searchTask = Task { await search(term: term) }
+    }
+    
+    func search(term: String) async {
         let trimmed = term.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else {
             tracks = []
             return
         }
         
-        searchTask = Task {
-            isLoading = true
-            do {
-                let results = try await service.searchTracks(term: trimmed, country: location.countryCode)
-                guard !Task.isCancelled else { return } // Busca substituída
-                tracks = results.filter { $0.previewUrl != nil }
-                isLoading = false
-            } catch {
-                guard !Task.isCancelled else { return } // Erro de cancelamento silencioso
-                errorMessage = "Não foi possível buscar. Tente novamente."
-                isLoading = false
-            }
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let results = try await service.searchTracks(term: trimmed, country: location.countryCode)
+            guard !Task.isCancelled else { return }
+            tracks = results.filter { $0.previewUrl != nil }
+            isLoading = false
+        } catch {
+            guard !Task.isCancelled else { return }
+            errorMessage = "Não foi possível buscar. Tente de novo."
+            isLoading = false
         }
     }
     

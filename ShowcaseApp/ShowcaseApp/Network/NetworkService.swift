@@ -7,13 +7,17 @@
 
 import Foundation
 
+nonisolated protocol TrackSearching: Sendable {
+    func searchTracks(term: String, country: String) async throws -> [Track]
+}
+
 nonisolated enum NetworkError: Error {
     case invalidURL
     case badResponse(statusCode: Int)
     case decodingFailed(Error)
 }
 
-nonisolated struct NetworkService {
+nonisolated struct NetworkService: TrackSearching {
     func searchTracks(term: String, country: String) async throws -> [Track] {
         
         // 1. Montar a URL
